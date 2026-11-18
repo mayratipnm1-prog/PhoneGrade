@@ -1,0 +1,159 @@
+{% extends "penaksir/base.html" %}
+{% block header_title %}Asisten Tanya-Jawab Toko{% endblock %}
+{% block header_sub %}Tanya tentang prediksi, kondisi, dan riwayat HP bekas berdasarkan FAQ PhoneGrade{% endblock %}
+
+{% block content %}
+<section class="card-clean mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+        <div class="card-head mb-0">
+            <span class="icon-chip chip-plum"><i class="bi bi-chat-dots"></i></span>
+            <div>
+                <div class="section-title">Asisten PhoneGrade</div>
+                <div class="section-sub">Jawaban mengacu pada FAQ PhoneGrade. Untuk pertanyaan di luar daftar, hubungi admin.</div>
+            </div>
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="aksi" value="reset">
+            <button type="submit" class="btn btn-outline-wine btn-sm px-3 py-2">
+                <i class="bi bi-trash3 me-1"></i> Hapus Chat
+            </button>
+        </form>
+    </div>
+
+    <div id="chatBox" class="d-flex flex-column gap-3 p-3 mb-3 rounded-4 border" style="background: var(--field); height: 360px; overflow-y: auto;">
+        {% for chat in chat_history %}
+            <div class="align-self-end chat-bubble-user">{{ chat.user }}</div>
+            <div class="align-self-start chat-bubble-ai">
+                <strong>CS AI:</strong> {{ chat.ai }}
+                {% if chat.peringatan %}<small class="d-block mt-2" role="status">{{ chat.peringatan }}</small>{% endif %}
+            </div>
+        {% empty %}
+            <div id="emptyState" class="text-center text-muted my-auto small">
+                <i class="bi bi-chat-square-text fs-4 d-block mb-2" style="color: var(--wine-600);"></i>
+                Mulai obrolan dengan memilih salah satu pertanyaan di bawah atau ketik pertanyaanmu sendiri.
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <button type="button" class="btn btn-outline-wine btn-sm px-3 py-1 quick-q" data-q="Bagaimana cara PhoneGrade menentukan status LAYAK_JUAL dan PERLU_SERVIS?">
+            Cara tentukan LAYAK_JUAL?
+        </button>
+        <button type="button" class="btn btn-outline-wine btn-sm px-3 py-1 quick-q" data-q="Kenapa taksiran harga di PhoneGrade dikonversi dengan kurs Rp190?">
+            Kenapa pakai kurs Rp190?
+        </button>
+        <button type="button" class="btn btn-outline-wine btn-sm px-3 py-1 quick-q" data-q="Faktor apa saja yang dipakai untuk menaksir harga HP bekas?">
+            Faktor penaksir harga HP?
+        </button>
+        <button type="button" class="btn btn-outline-wine btn-sm px-3 py-1 quick-q" data-q="Bagaimana usia pemakaian dan kesehatan baterai memengaruhi taksiran harga HP bekas?">
+            Pengaruh usia dan baterai pada harga?
+        </button>
+        <button type="button" class="btn btn-outline-wine btn-sm px-3 py-1 quick-q" data-q="Apa arti status PERLU_SERVIS pada hasil prediksi PhoneGrade?">
+            Apa arti status PERLU_SERVIS?
+        </button>
+    </div>
+
+    <form id="chatForm">
+        <label for="inputPertanyaan" class="form-label">Pertanyaan</label>
+        <div class="input-group">
+            <input type="text" id="inputPertanyaan" class="form-control" placeholder="Ketik pertanyaanmu di sini untuk melanjutkan obrolan..." required autocomplete="off">
+            <button type="submit" id="btnKirim" class="btn btn-wine px-4">
+                <i class="bi bi-send me-1"></i> Kirim
+            </button>
+        </div>
+    </form>
+</section>
+
+<section class="card-clean">
+    <div class="tips-box">
+        <i class="bi bi-lightbulb me-1"></i> <strong>Daftar FAQ yang jadi acuan jawaban:</strong>
+        <ul>
+            {% for item in faq_list %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const chatBox = document.getElementById('chatBox');
+    const chatForm = document.getElementById('chatForm');
+    const inputPertanyaan = document.getElementById('inputPertanyaan');
+    const btnKirim = document.getElementById('btnKirim');
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    function tambahBubble(teks, pengirim) {
+        const emptyState = document.getElementById('emptyState');
+        if (emptyState) emptyState.remove();
+
+        const div = document.createElement('div');
+        if (pengirim === 'user') {
+            div.className = 'align-self-end chat-bubble-user';
+            div.textContent = teks;
+        } else {
+            div.className = 'align-self-start chat-bubble-ai';
+            const label = document.createElement('strong');
+            label.textContent = 'CS AI: ';
+            div.appendChild(label);
+            div.appendChild(document.createTextNode(teks));
+        }
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return div;
+    }
+
+    chatForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const pertanyaan = inputPertanyaan.value.trim();
+        if (!pertanyaan) return;
+
+        tambahBubble(pertanyaan, 'user');
+        inputPertanyaan.value = '';
+        btnKirim.disabled = true;
+
+        const bubbleLoading = tambahBubble('Sedang mengetik...', 'ai');
+
+        try {
+            const resp = await fetch("{% url 'asisten_kirim' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ pertanyaan: pertanyaan })
+            });
+            const data = await resp.json();
+            bubbleLoading.innerHTML = '';
+            const label = document.createElement('strong');
+            label.textContent = 'CS AI: ';
+            bubbleLoading.appendChild(label);
+            bubbleLoading.appendChild(document.createTextNode(data.jawaban || data.error || 'Terjadi kesalahan.'));
+            if (data.peringatan) {
+                const notice = document.createElement('small');
+                notice.className = 'd-block mt-2';
+                notice.setAttribute('role', 'status');
+                notice.textContent = data.peringatan;
+                bubbleLoading.appendChild(notice);
+            }
+        } catch (err) {
+            bubbleLoading.textContent = 'Gagal terhubung ke server Django.';
+        } finally {
+            btnKirim.disabled = false;
+            inputPertanyaan.focus();
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    });
+
+    // Kirim pertanyaan contoh melalui alur formulir chat yang sama.
+    document.querySelectorAll('.quick-q').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            inputPertanyaan.value = this.dataset.q;
+            chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "penaksir/base.html" %}
+{% block header_title %}Prediksi Harga & Kelayakan{% endblock %}
+{% block header_sub %}Isi data HP, langsung dapat taksiran harga dan status kelayakan{% endblock %}
+
+{% block content %}
+<section class="card-clean">
+    <div class="card-head">
+        <span class="icon-chip chip-wine"><i class="bi bi-calculator"></i></span>
+        <div>
+            <div class="section-title">Cek Harga HP Bekas</div>
+            <div class="section-sub">Isi kondisi unit, sistem akan menaksir harga dan menentukan kelayakan jualnya.</div>
+        </div>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-6">
+                <label class="form-label" for="nama_hp">Model / Tipe Perangkat</label>
+                <input type="text" id="nama_hp" name="nama_hp" class="form-control" placeholder="Contoh: Samsung Galaxy A54" required>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label" for="age_months">Usia Pemakaian (Bulan)</label>
+                <input type="number" id="age_months" name="age_months" class="form-control" min="1" max="120" placeholder="Contoh: 12" required>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label" for="battery_health">Kesehatan Baterai (%)</label>
+                <input type="number" id="battery_health" name="battery_health" class="form-control" min="10" max="100" placeholder="Contoh: 85" required>
+            </div>
+            <div class="col-lg-6">
+                <label class="form-label" for="screen_cracked">Kondisi Layar</label>
+                <select id="screen_cracked" name="screen_cracked" class="form-select" required>
+                    <option value="" selected disabled>Pilih kondisi layar...</option>
+                    <option value="0">Mulus (Tidak Retak)</option>
+                    <option value="1">Retak (Screen Cracked)</option>
+                </select>
+            </div>
+            <div class="col-lg-6">
+                <button type="submit" class="btn btn-wine w-100"><i class="bi bi-calculator me-1"></i> Hitung Taksiran</button>
+            </div>
+        </div>
+    </form>
+
+    {% if hasil_prediksi %}
+    <div class="result-box">
+        <div class="row g-3">
+            <div class="col-md-5">
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <div class="result-eyebrow">Taksiran Harga ({{ hasil_prediksi.nama_hp }})</div>
+                    <span class="{% if hasil_prediksi.prediksi_kelayakan == 'LAYAK_JUAL' %}pill-layak{% else %}pill-servis{% endif %}">
+                        {{ hasil_prediksi.prediksi_kelayakan }}
+                    </span>
+                </div>
+                <div class="result-price">{{ hasil_harga_rp }}</div>
+                <div class="result-note">Setara {{ hasil_harga_inr }} (konversi dari dataset Kaggle, kurs Rp190/INR) · Tersimpan ke riwayat</div>
+            </div>
+            <div class="col-md-7">
+                <div class="result-divider h-100 result-ai">
+                    {% if peringatan_ai %}<div class="tips-box mb-2" role="status">{{ peringatan_ai }}</div>{% endif %}
+                    <strong><i class="bi bi-chat-left-text"></i> Penjelasan:</strong> {{ hasil_prediksi.penjelasan_ai }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "penaksir/base.html" %}
+{% block header_title %}Riwayat Pengecekan Pengguna{% endblock %}
+{% block header_sub %}Data otomatis tersimpan di tabel RiwayatPrediksi pada database db.sqlite3{% endblock %}
+
+{% block content %}
+<section class="card-clean">
+    <div class="card-head">
+        <span class="icon-chip chip-gold"><i class="bi bi-clock-history"></i></span>
+        <div>
+            <div class="section-title">Riwayat Pengecekan Terbaru</div>
+            <div class="section-sub">Setiap kali form prediksi dijalankan, data dan status kelayakan langsung tercatat di SQLite.</div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Model HP</th>
+                    <th>Umur</th>
+                    <th>Baterai</th>
+                    <th>Layar</th>
+                    <th>Taksiran Harga</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in riwayat_list %}
+                <tr>
+                    <td class="fw-semibold">{{ r.nama_hp }}</td>
+                    <td>{{ r.age_months }} bln</td>
+                    <td>{{ r.battery_health }}%</td>
+                    <td>{% if r.screen_cracked == 1 %}Retak{% else %}Mulus{% endif %}</td>
+                    <td class="fw-semibold">{{ r.harga_rp }}</td>
+                    <td>
+                        <span class="{% if r.prediksi_kelayakan == 'LAYAK_JUAL' %}pill-layak{% else %}pill-servis{% endif %}">
+                            {{ r.prediksi_kelayakan }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">Belum ada riwayat pengecekan. Silakan coba menu Prediksi Harga terlebih dahulu.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
