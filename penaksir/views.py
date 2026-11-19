@@ -212,6 +212,9 @@ def konteks_dasar(aktif_menu):
     }
 
 
+def index(request):
+    return render(request, "penaksir/index.html", konteks_dasar("index"))
+
 
 def prediksi(request):
     ctx = konteks_dasar("prediksi")

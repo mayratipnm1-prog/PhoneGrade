@@ -5,7 +5,66 @@ from groq import RateLimitError
 from django.test import TestCase
 from django.urls import reverse
 
+from .models import RiwayatPrediksi
 from .views import HasilPanggilanAI, panggil_ai
+
+
+class MainPageTests(TestCase):
+    @patch("penaksir.views.konteks_dasar")
+    def test_main_pages_resolve_and_render(self, konteks_mock):
+        statistik = {
+            "total": "100",
+            "layak": "60",
+            "servis": "40",
+            "total_raw": 100,
+            "layak_raw": 60,
+            "servis_raw": 40,
+            "rata_baterai": 75,
+            "rata_harga_rp": "Rp 1.000.000",
+        }
+        konteks_mock.side_effect = lambda aktif: {
+            "aktif_menu": aktif,
+            "status_ai": "Mode Offline",
+            "ai_aktif": False,
+            "statistik": statistik,
+        }
+
+        for route_name in ("index", "prediksi", "asisten", "visualisasi", "riwayat"):
+            with self.subTest(route=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertEqual(response.status_code, 200)
+
+        self.assertContains(response, "Mode Offline")
+
+    @patch("penaksir.views.panggil_ai", return_value=HasilPanggilanAI(status="offline"))
+    @patch("penaksir.views.konteks_dasar")
+    def test_prediction_saves_history_with_repair_override(
+        self, konteks_mock, ai_mock
+    ):
+        konteks_mock.return_value = {
+            "aktif_menu": "prediksi",
+            "status_ai": "Mode Offline",
+            "ai_aktif": False,
+            "statistik": {},
+        }
+
+        response = self.client.post(
+            reverse("prediksi"),
+            {
+                "nama_hp": "HP Uji",
+                "age_months": "12",
+                "battery_health": "85",
+                "screen_cracked": "1",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "PERLU_SERVIS")
+        self.assertEqual(RiwayatPrediksi.objects.count(), 1)
+        riwayat = RiwayatPrediksi.objects.get()
+        self.assertEqual(riwayat.screen_cracked, 1)
+        self.assertEqual(riwayat.prediksi_kelayakan, "PERLU_SERVIS")
+        ai_mock.assert_called_once()
 
 
 class VisualisasiTests(TestCase):

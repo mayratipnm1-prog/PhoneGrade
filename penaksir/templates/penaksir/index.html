@@ -1,0 +1,110 @@
+{% extends "penaksir/base.html" %}
+{% block header_title %}Tentang proyek PhoneGrade{% endblock %}
+{% block header_sub %}Cara PhoneGrade menaksir harga HP bekas, menilai kelayakan, dan mencatat hasil prediksi{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Gambaran umum proyek -->
+    <div class="col-12">
+        <section class="card-clean">
+            <div class="card-head">
+                <span class="icon-chip chip-wine"><i class="bi bi-phone"></i></span>
+                <div>
+                    <div class="section-title">Apa itu PhoneGrade?</div>
+                    <div class="section-sub">Aplikasi lokal untuk menaksir harga jual kembali dan menilai kondisi HP bekas.</div>
+                </div>
+            </div>
+            <p class="mb-3" style="font-size: 0.92rem; line-height: 1.7; color: var(--ink);">
+                <strong>PhoneGrade</strong> membantu penjual dan pembeli memperkirakan harga jual kembali HP bekas. Model harga memakai usia pemakaian dan kesehatan baterai, sedangkan aturan kelayakan juga memeriksa kondisi layar.
+                Setiap prediksi disertai penjelasan. Saat layanan Groq tersedia, AI menyusun penjelasan; jika tidak, aplikasi menampilkan ringkasan lokal.
+                Hasil prediksi tersimpan di database lokal <code>db.sqlite3</code>. Halaman Visualisasi menampilkan grafik dari data yang tersedia.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'prediksi' %}" class="btn btn-wine btn-sm px-4 py-2">
+                    <i class="bi bi-calculator me-1"></i> Mulai Cek Harga HP
+                </a>
+                <a href="{% url 'visualisasi' %}" class="btn btn-outline-wine btn-sm px-4 py-2">
+                    <i class="bi bi-bar-chart-line me-1"></i> Lihat Grafik Data HP Bekas
+                </a>
+            </div>
+        </section>
+    </div>
+
+    <!-- Materi proyek dan dataset -->
+    <div class="col-lg-6">
+        <section class="card-clean h-100">
+            <div class="card-head">
+                <span class="icon-chip chip-plum"><i class="bi bi-journal-code"></i></span>
+                <div>
+                    <div class="section-title">Materi dan dataset proyek</div>
+                    <div class="section-sub">Materi praktikum P07, P13, dan P14 yang digunakan dalam proyek ini.</div>
+                </div>
+            </div>
+            <ul class="mb-0 ps-3" style="font-size: 0.88rem; line-height: 1.75; color: var(--ink);">
+                <li><strong>P07, Modul 09 tentang pembelajaran mesin (Machine Learning)</strong> menjadi dasar pemilihan dataset HP bekas dan model untuk menaksir harga serta kelayakan.</li>
+                <li><strong>P13, Modul 13 tentang model bahasa besar (LLM) dan AI generatif</strong> diterapkan pada Asisten Toko. Asisten menjawab pertanyaan tentang informasi PhoneGrade dengan Groq saat tersedia. Jika tidak, aplikasi mencocokkan pertanyaan dengan FAQ lokal.</li>
+                <li><strong>P14, Modul 14 tentang Deployment</strong> diterapkan dengan menyimpan model terlatih dalam file <code>.joblib</code> dan menjalankannya melalui Django. SQLite menyimpan riwayat prediksi.</li>
+                <li>PhoneGrade memakai <em>Used Phone Price Prediction Dataset</em> dari Kaggle, yang berisi <strong>1.000.000 baris</strong>. Nilai harga dalam INR dikalikan faktor konversi proyek Rp190 per INR untuk ditampilkan dalam rupiah.</li>
+            </ul>
+        </section>
+    </div>
+
+    <!-- Model dan teknologi -->
+    <div class="col-lg-6">
+        <section class="card-clean h-100">
+            <div class="card-head">
+                <span class="icon-chip chip-olive"><i class="bi bi-cpu"></i></span>
+                <div>
+                    <div class="section-title">Model dan teknologi</div>
+                    <div class="section-sub">Komponen yang menghitung taksiran dan membantu menjelaskan hasil.</div>
+                </div>
+            </div>
+            <ul class="mb-0 ps-3" style="font-size: 0.88rem; line-height: 1.75; color: var(--ink);">
+                <li>Regresi linear (<code>LinearRegression</code>) menaksir harga jual kembali berdasarkan usia pemakaian dalam bulan dan kesehatan baterai.</li>
+                <li>Model pohon keputusan (<code>DecisionTreeClassifier</code>) menilai kelayakan. Aturan PhoneGrade menetapkan status perlu servis jika layar retak, kesehatan baterai di bawah 75%, atau usia pemakaian 36 bulan atau lebih.</li>
+                <li>Saat layanan Groq tersedia, model bahasa membantu menjelaskan hasil prediksi, menguraikan grafik yang dipilih, dan menjawab pertanyaan di Asisten Toko. Jika layanan tidak tersedia, aplikasi memakai ringkasan atau jawaban lokal.</li>
+                <li>Chart.js menampilkan grafik interaktif, sedangkan SQLite menyimpan riwayat prediksi di <code>db.sqlite3</code>.</li>
+            </ul>
+        </section>
+    </div>
+
+    <!-- Urutan pemrosesan prediksi -->
+    <div class="col-12">
+        <section class="card-clean">
+            <div class="card-head">
+                <span class="icon-chip chip-gold"><i class="bi bi-diagram-3"></i></span>
+                <div>
+                    <div class="section-title">Bagaimana PhoneGrade memproses prediksi?</div>
+                    <div class="section-sub">Model dilatih lebih dulu, lalu aplikasi memakai informasi HP untuk menghitung hasil.</div>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="p-3 rounded-4 border h-100" style="background: var(--field);">
+                        <div class="fw-bold small mb-1" style="color: var(--wine-600);">1. Latih Model</div>
+                        <div class="small text-muted">Skrip <code>latih_model.py</code> melatih model harga dan kelayakan dari dataset, lalu menyimpan kedua model serta ringkasan statistik.</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 rounded-4 border h-100" style="background: var(--field);">
+                        <div class="fw-bold small mb-1" style="color: var(--wine-600);">2. Isi Kondisi HP</div>
+                        <div class="small text-muted">Pada halaman Prediksi, masukkan nama HP, usia pemakaian, kesehatan baterai, dan kondisi layar.</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 rounded-4 border h-100" style="background: var(--field);">
+                        <div class="fw-bold small mb-1" style="color: var(--wine-600);">3. Hitung Hasil</div>
+                        <div class="small text-muted">Django memakai model untuk menaksir harga. Model kelayakan dan aturan PhoneGrade menentukan status perangkat.</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 rounded-4 border h-100" style="background: var(--field);">
+                        <div class="fw-bold small mb-1" style="color: var(--wine-600);">4. Simpan Riwayat</div>
+                        <div class="small text-muted">PhoneGrade menyimpan harga dan status kelayakan di tabel <code>RiwayatPrediksi</code>. Buka menu Riwayat untuk melihat hasil sebelumnya.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}
