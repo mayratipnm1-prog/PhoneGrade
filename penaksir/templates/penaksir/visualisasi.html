@@ -22,17 +22,17 @@
                     <canvas id="chartScatter"></canvas>
                 </div>
             </div>
-            <form method="POST" class="mt-3">
+            <form method="POST" class="mt-3 chart-explanation-form">
                 {% csrf_token %}
                 <input type="hidden" name="grafik" value="scatter">
                 <button type="submit" class="btn btn-wine">Jelaskan hubungan baterai dan harga</button>
             </form>
-            {% if penjelasan_grafik.scatter %}
-            <div class="chat-bubble-ai is-wide mt-3">
-                <strong>Penjelasan grafik sebar:</strong> {{ penjelasan_grafik.scatter.teks }}
-                {% if penjelasan_grafik.scatter.peringatan %}<small class="d-block mt-2" role="status">{{ penjelasan_grafik.scatter.peringatan }}</small>{% endif %}
+            <div id="ai-explanation-scatter" class="chat-bubble-ai is-wide mt-3 chart-explanation" aria-live="polite" aria-busy="false" tabindex="-1" {% if not penjelasan_grafik.scatter %}hidden{% endif %}>
+                {% if penjelasan_grafik.scatter %}
+                    <strong>Penjelasan grafik sebar:</strong> {{ penjelasan_grafik.scatter.teks }}
+                    {% if penjelasan_grafik.scatter.peringatan %}<small class="d-block mt-2" role="status">{{ penjelasan_grafik.scatter.peringatan }}</small>{% endif %}
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
 
@@ -44,17 +44,17 @@
                     <canvas id="chartBar"></canvas>
                 </div>
             </div>
-            <form method="POST" class="mt-3">
+            <form method="POST" class="mt-3 chart-explanation-form">
                 {% csrf_token %}
                 <input type="hidden" name="grafik" value="kelayakan">
                 <button type="submit" class="btn btn-wine">Jelaskan distribusi kelayakan</button>
             </form>
-            {% if penjelasan_grafik.kelayakan %}
-            <div class="chat-bubble-ai is-wide mt-3">
-                <strong>Penjelasan grafik kelayakan:</strong> {{ penjelasan_grafik.kelayakan.teks }}
-                {% if penjelasan_grafik.kelayakan.peringatan %}<small class="d-block mt-2" role="status">{{ penjelasan_grafik.kelayakan.peringatan }}</small>{% endif %}
+            <div id="ai-explanation-kelayakan" class="chat-bubble-ai is-wide mt-3 chart-explanation" aria-live="polite" aria-busy="false" tabindex="-1" {% if not penjelasan_grafik.kelayakan %}hidden{% endif %}>
+                {% if penjelasan_grafik.kelayakan %}
+                    <strong>Penjelasan grafik kelayakan:</strong> {{ penjelasan_grafik.kelayakan.teks }}
+                    {% if penjelasan_grafik.kelayakan.peringatan %}<small class="d-block mt-2" role="status">{{ penjelasan_grafik.kelayakan.peringatan }}</small>{% endif %}
+                {% endif %}
             </div>
-            {% endif %}
         </div>
         <div class="col-lg-6">
             <div class="chart-tile">
@@ -63,17 +63,17 @@
                     <canvas id="chartDoughnut"></canvas>
                 </div>
             </div>
-            <form method="POST" class="mt-3">
+            <form method="POST" class="mt-3 chart-explanation-form">
                 {% csrf_token %}
                 <input type="hidden" name="grafik" value="kondisi">
                 <button type="submit" class="btn btn-wine">Jelaskan distribusi kondisi fisik</button>
             </form>
-            {% if penjelasan_grafik.kondisi %}
-            <div class="chat-bubble-ai is-wide mt-3">
-                <strong>Penjelasan grafik kondisi fisik:</strong> {{ penjelasan_grafik.kondisi.teks }}
-                {% if penjelasan_grafik.kondisi.peringatan %}<small class="d-block mt-2" role="status">{{ penjelasan_grafik.kondisi.peringatan }}</small>{% endif %}
+            <div id="ai-explanation-kondisi" class="chat-bubble-ai is-wide mt-3 chart-explanation" aria-live="polite" aria-busy="false" tabindex="-1" {% if not penjelasan_grafik.kondisi %}hidden{% endif %}>
+                {% if penjelasan_grafik.kondisi %}
+                    <strong>Penjelasan grafik kondisi fisik:</strong> {{ penjelasan_grafik.kondisi.teks }}
+                    {% if penjelasan_grafik.kondisi.peringatan %}<small class="d-block mt-2" role="status">{{ penjelasan_grafik.kondisi.peringatan }}</small>{% endif %}
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
 </section>
@@ -216,5 +216,74 @@
             }
         }
     });
+
+    (function () {
+        const forms = document.querySelectorAll('.chart-explanation-form');
+        const buttons = document.querySelectorAll('.chart-explanation-form button[type="submit"]');
+        let requestInProgress = false;
+
+        forms.forEach(function (form) {
+            form.addEventListener('submit', async function (event) {
+                if (requestInProgress) {
+                    event.preventDefault();
+                    return;
+                }
+                if (!window.fetch || !window.DOMParser) return;
+
+                const chart = form.querySelector('input[name="grafik"]');
+                const button = form.querySelector('button[type="submit"]');
+                const target = chart && document.getElementById('ai-explanation-' + chart.value);
+                if (!chart || !button || !target) {
+                    console.error('Form penjelasan grafik tidak lengkap.');
+                    return;
+                }
+
+                event.preventDefault();
+                requestInProgress = true;
+                const labelAwal = button.textContent;
+                buttons.forEach(function (item) {
+                    item.setAttribute('aria-disabled', 'true');
+                });
+                button.textContent = 'Menyiapkan penjelasan...';
+                target.hidden = false;
+                target.classList.add('is-loading');
+                target.setAttribute('aria-busy', 'true');
+                target.innerHTML = '<span class="chart-explanation-spinner" aria-hidden="true"></span><span role="status">Sedang menyiapkan penjelasan grafik ini...</span>';
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: form.method,
+                        body: new FormData(form),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Permintaan penjelasan grafik gagal.');
+                    }
+
+                    const html = await response.text();
+                    const halaman = new DOMParser().parseFromString(html, 'text/html');
+                    const hasil = halaman.getElementById('ai-explanation-' + chart.value);
+                    if (!hasil || !hasil.textContent.trim()) {
+                        throw new Error('Respons penjelasan grafik tidak ditemukan.');
+                    }
+
+                    target.innerHTML = hasil.innerHTML;
+                    target.hidden = hasil.hidden;
+                } catch (error) {
+                    console.error('Gagal memuat penjelasan grafik.', error);
+                    target.innerHTML = '<span role="alert">Penjelasan belum berhasil dimuat. Coba lagi.</span>';
+                    target.hidden = false;
+                } finally {
+                    target.classList.remove('is-loading');
+                    target.setAttribute('aria-busy', 'false');
+                    buttons.forEach(function (item) {
+                        item.removeAttribute('aria-disabled');
+                    });
+                    button.textContent = labelAwal;
+                    requestInProgress = false;
+                }
+            });
+        });
+    })();
 </script>
 {% endblock %}

@@ -9,6 +9,39 @@ from .views import HasilPanggilanAI, panggil_ai
 
 
 class VisualisasiTests(TestCase):
+    @patch("penaksir.views.siapkan_data_grafik")
+    @patch("penaksir.views.konteks_dasar")
+    def test_chart_explanations_have_inline_loading_regions(
+        self, konteks_mock, data_mock
+    ):
+        statistik = {
+            "total": "100",
+            "layak": "60",
+            "servis": "40",
+            "total_raw": 100,
+            "layak_raw": 60,
+            "servis_raw": 40,
+            "rata_baterai": 75,
+            "rata_harga_rp": "Rp 1.000.000",
+        }
+        konteks_mock.return_value = {"statistik": statistik}
+        data_mock.return_value = (
+            "[]",
+            "[]",
+            "[60, 40]",
+            '["Excellent", "Good"]',
+            "[70, 30]",
+            statistik,
+        )
+
+        response = self.client.get(reverse("visualisasi"))
+
+        for grafik in ("scatter", "kelayakan", "kondisi"):
+            with self.subTest(grafik=grafik):
+                self.assertContains(response, f'id="ai-explanation-{grafik}"')
+        self.assertContains(response, "Sedang menyiapkan penjelasan grafik ini...")
+        self.assertContains(response, "setAttribute('aria-busy', 'true')")
+
     @patch("penaksir.views.panggil_ai")
     @patch("penaksir.views.siapkan_data_grafik")
     @patch("penaksir.views.konteks_dasar")
