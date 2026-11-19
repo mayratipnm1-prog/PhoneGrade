@@ -60,7 +60,7 @@ API Groq tidak wajib. Tanpa API key, prediksi dan jawaban lokal tetap tersedia. 
 
 `db.sqlite3` dibuat di komputer masing-masing dan tidak dibagikan. Fixture `penaksir/fixtures/demo_data.json` mengisi tabel dataset dan riwayat dengan data demo yang sama. Fixture tidak memuat akun, sesi login, atau log admin. Perubahan data setelah aplikasi dijalankan hanya tersimpan di database lokal dan tidak tersinkron kembali ke GitHub.
 
-Jika dosen perlu membuka `/admin/`, buat akun lokal:
+Untuk mengakses `/admin/`, buat akun lokal:
 
 - Windows: `.\venv\Scripts\python.exe manage.py createsuperuser`
 - macOS: aktifkan virtual environment dengan `source .venv/bin/activate`, lalu jalankan `python manage.py createsuperuser`
