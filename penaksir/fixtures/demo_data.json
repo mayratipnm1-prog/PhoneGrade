@@ -1,5 +1,23 @@
 [
 {
+  "model": "auth.user",
+  "pk": 2,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$ClzxCrG00z3oASCs2Ikf25$qfrngZs9P1YEnPhUto4YAaL0XxdQQjPV8/fnaUZsrkM=",
+    "last_login": null,
+    "is_superuser": true,
+    "username": "mayra",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-11-19T05:35:36.652Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
   "model": "penaksir.datasethp",
   "pk": 1301,
   "fields": {

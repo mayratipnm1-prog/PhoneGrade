@@ -58,7 +58,12 @@ API Groq tidak wajib. Tanpa API key, prediksi dan jawaban lokal tetap tersedia. 
 
 `db.sqlite3` adalah snapshot awal bersama repo. Aplikasi menyimpan perubahan berikutnya secara lokal, dan perubahan itu tidak tersinkron kembali ke GitHub. Fixture `penaksir/fixtures/demo_data.json` tetap tersedia untuk mengisi tabel dataset dan riwayat jika database perlu dibuat ulang.
 
-Untuk mengakses `/admin/`, buat akun lokal:
+Untuk mengakses `/admin/`, gunakan akun bawaan:
+
+- **Username:** `mayra`
+- **Password:** `12345678`
+
+Akun ini sudah tersimpan di `db.sqlite3` yang disertakan dalam repo. Jika ingin membuat akun admin tambahan:
 
 - Windows: `.\venv\Scripts\python.exe manage.py createsuperuser`
 - macOS: aktifkan virtual environment dengan `source .venv/bin/activate`, lalu jalankan `python manage.py createsuperuser`
